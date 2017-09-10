@@ -8,10 +8,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-from xvfbwrapper import Xvfb
-
-vdisplay = Xvfb()
-vdisplay.start()
 
 
 import dropbox
@@ -163,6 +159,6 @@ for file in files:
         count = count + 1
     else:
         os.remove(file)
-vdisplay.stop()
+
 print('Done')
 print('It took {0:0.1f} seconds'.format(time.time() - start))
