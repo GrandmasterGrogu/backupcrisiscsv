@@ -10,9 +10,6 @@ from selenium.webdriver.support import expected_conditions as EC
 import dropbox
 from dropbox.files import WriteMode
 from dropbox.exceptions import ApiError, AuthError
-import pychrome
-
-
 
 start = time.time()
 parser = OptionParser()
