@@ -58,6 +58,7 @@ chrome_options = Options()
 print(dir_path)
 prefs = {"download.default_directory" : dir_path}
 chrome_options.add_experimental_option("prefs",prefs)
+chrome_options.binary_location = "/app/.apt/usr/bin/google-chrome"
 driver = webdriver.Chrome(chrome_options=chrome_options)
 driver.get("http://www.crisiscleanup.org/login")
 
