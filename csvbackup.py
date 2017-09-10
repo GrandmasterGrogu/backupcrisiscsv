@@ -59,6 +59,8 @@ print(dir_path)
 prefs = {"download.default_directory" : dir_path}
 chrome_options.add_experimental_option("prefs",prefs)
 chrome_options.binary_location = "/app/.apt/usr/bin/google-chrome"
+chrome_options.add_argument('--disable-gpu')
+chrome_options.add_argument('--no-sandbox')
 driver = webdriver.Chrome(chrome_options=chrome_options)
 driver.get("http://www.crisiscleanup.org/login")
 
@@ -136,6 +138,9 @@ print('Assuming download is finished after 60 seconds.')
 driver.close()
 
 #Get name of latest file
+filelist = os.listdir(dir_path)
+for file in filelist:
+    print(file)
 files = glob.glob('*.csv')
 files.sort(key=lambda x: os.stat(os.path.join(dir_path, x)).st_mtime, reverse=True)
 # Upload backup to Dropbox
