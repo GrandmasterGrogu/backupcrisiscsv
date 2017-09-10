@@ -7,11 +7,17 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+
+from pyvirtualdisplay import Display
+
 import dropbox
 from dropbox.files import WriteMode
 from dropbox.exceptions import ApiError, AuthError
 
 start = time.time()
+display = Display(visible=0, size=(800, 600))
+display.start()
+
 parser = OptionParser()
 parser.add_option("-e", "--email", type="string", dest="email", help="Crisis Cleanup login email")
 parser.add_option("-p", "--password", type="string", dest="password", help="Crisis Cleanup login password")
@@ -62,6 +68,7 @@ chrome_options.binary_location = "/app/.apt/usr/bin/google-chrome"
 chrome_options.add_argument('--disable-gpu')
 chrome_options.add_argument('--no-sandbox')
 driver = webdriver.Chrome(chrome_options=chrome_options)
+driver.set_window_size(800, 600)
 driver.get("http://www.crisiscleanup.org/login")
 
 
@@ -70,6 +77,7 @@ try:
 except TimeoutException:
     print('Crisis Cleanup website failed to load.')
     driver.close()
+    display.stop()
     sys.exit()
 
 print('Crisis Cleanup website loaded.')
@@ -91,6 +99,7 @@ if login is False:
     except WebDriverException:
         print('Failed to fill out login form.')
         driver.close()
+        display.stop()
         sys.exit()
     login = True
     try:
@@ -102,6 +111,7 @@ if login is False:
 if login is False:
     print('Failed to login.')
     driver.close()
+    display.stop()
     sys.exit()
 else:
     print('Crisis Cleanup dashboard page.')
@@ -114,6 +124,7 @@ try:
 except TimeoutException:
     print('Failed to load map page.')
     driver.close()
+    display.stop()
     sys.exit()
 print('Crisis Cleanup Map.')
 #Close hint if pops up
@@ -128,6 +139,7 @@ try:
 except WebDriverException:
     print('Failed to press csv download btn.')
     driver.close()
+    display.stop()
     sys.exit()
 print('Downloading the CSV.')
 time.sleep(60)
