@@ -8,15 +8,18 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-from pyvirtualdisplay import Display
+from xvfbwrapper import Xvfb
+
+vdisplay = Xvfb()
+vdisplay.start()
+
 
 import dropbox
 from dropbox.files import WriteMode
 from dropbox.exceptions import ApiError, AuthError
 
 start = time.time()
-display = Display(visible=0, size=(800, 600))
-display.start()
+
 
 parser = OptionParser()
 parser.add_option("-e", "--email", type="string", dest="email", help="Crisis Cleanup login email")
@@ -77,7 +80,6 @@ try:
 except TimeoutException:
     print('Crisis Cleanup website failed to load.')
     driver.close()
-    display.stop()
     sys.exit()
 
 print('Crisis Cleanup website loaded.')
@@ -99,7 +101,6 @@ if login is False:
     except WebDriverException:
         print('Failed to fill out login form.')
         driver.close()
-        display.stop()
         sys.exit()
     login = True
     try:
@@ -111,7 +112,6 @@ if login is False:
 if login is False:
     print('Failed to login.')
     driver.close()
-    display.stop()
     sys.exit()
 else:
     print('Crisis Cleanup dashboard page.')
@@ -124,7 +124,6 @@ try:
 except TimeoutException:
     print('Failed to load map page.')
     driver.close()
-    display.stop()
     sys.exit()
 print('Crisis Cleanup Map.')
 #Close hint if pops up
@@ -139,7 +138,6 @@ try:
 except WebDriverException:
     print('Failed to press csv download btn.')
     driver.close()
-    display.stop()
     sys.exit()
 print('Downloading the CSV.')
 time.sleep(60)
@@ -165,5 +163,6 @@ for file in files:
         count = count + 1
     else:
         os.remove(file)
+vdisplay.stop()
 print('Done')
 print('It took {0:0.1f} seconds'.format(time.time() - start))
