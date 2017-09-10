@@ -56,18 +56,26 @@ def backup(localfile):
                 sys.exit()
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
-chrome_options = Options()
+#chrome_options = Options()
 #chrome_options.add_argument("--disable-extensions")
 #chrome_options.add_argument("--headless") # This makes Chrome run without the GUI, but disabled downloading ;^(
 
 print(dir_path)
 prefs = {"download.default_directory" : dir_path}
-chrome_options.add_experimental_option("prefs",prefs)
-chrome_options.binary_location = "/app/.apt/usr/bin/google-chrome"
-chrome_options.add_argument('--disable-gpu')
-chrome_options.add_argument('--no-sandbox')
-driver = webdriver.Chrome(chrome_options=chrome_options)
-driver.set_window_size(800, 600)
+#chrome_options.add_experimental_option("prefs",prefs)
+#chrome_options.binary_location = "/app/.apt/usr/bin/google-chrome"
+#chrome_options.add_argument('--disable-gpu')
+#chrome_options.add_argument('--no-sandbox')
+#driver = webdriver.Chrome(chrome_options=chrome_options)
+# To prevent download dialog
+profile = webdriver.FirefoxProfile()
+profile.set_preference('browser.download.folderList', 2) # custom location
+profile.set_preference('browser.download.manager.showWhenStarting', False)
+profile.set_preference('browser.download.dir', '/tmp')
+profile.set_preference('browser.helperApps.neverAsk.saveToDisk', 'text/csv')
+
+driver = webdriver.Firefox(profile)
+#driver.set_window_size(800, 600)
 driver.get("http://www.crisiscleanup.org/login")
 
 
