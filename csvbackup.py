@@ -199,11 +199,12 @@ driver.close()
 backup(downloadedcsv)
 # Remove all but the latest five CSV files
 
-count = 0
+'''count = 0
 for file in files:
     if count < 5:
         count = count + 1
     else:
         os.remove(file)
+'''
 print('Done')
 print('It took {0:0.1f} seconds'.format(time.time() - start))
