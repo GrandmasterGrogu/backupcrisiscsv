@@ -1,4 +1,4 @@
-import os, glob, time, operator, sys, time
+import os, glob, time, operator, sys, time, requests
 from optparse import OptionParser
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
@@ -7,16 +7,11 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-
-
-
 import dropbox
 from dropbox.files import WriteMode
 from dropbox.exceptions import ApiError, AuthError
 
 start = time.time()
-
-
 parser = OptionParser()
 parser.add_option("-e", "--email", type="string", dest="email", help="Crisis Cleanup login email")
 parser.add_option("-p", "--password", type="string", dest="password", help="Crisis Cleanup login password")
@@ -56,26 +51,17 @@ def backup(localfile):
                 sys.exit()
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
-#chrome_options = Options()
+chrome_options = Options()
 #chrome_options.add_argument("--disable-extensions")
-#chrome_options.add_argument("--headless") # This makes Chrome run without the GUI, but disabled downloading ;^(
+#chrome_options.add_argument("--headless") # This makes Chrome run without the GUI, but disables downloading ;^(
 
 print(dir_path)
 prefs = {"download.default_directory" : dir_path}
-#chrome_options.add_experimental_option("prefs",prefs)
-#chrome_options.binary_location = "/app/.apt/usr/bin/google-chrome"
+chrome_options.add_experimental_option("prefs",prefs)
+chrome_options.binary_location = "/app/.apt/usr/bin/google-chrome" # Remove for non-Heroku
 #chrome_options.add_argument('--disable-gpu')
 #chrome_options.add_argument('--no-sandbox')
-#driver = webdriver.Chrome(chrome_options=chrome_options)
-# To prevent download dialog
-profile = webdriver.FirefoxProfile()
-profile.set_preference('browser.download.folderList', 2) # custom location
-profile.set_preference('browser.download.manager.showWhenStarting', False)
-profile.set_preference('browser.download.dir', '/tmp')
-profile.set_preference('browser.helperApps.neverAsk.saveToDisk', 'text/csv')
-
-driver = webdriver.Firefox(profile)
-#driver.set_window_size(800, 600)
+driver = webdriver.Chrome(chrome_options=chrome_options)
 driver.get("http://www.crisiscleanup.org/login")
 
 
@@ -120,9 +106,61 @@ if login is False:
 else:
     print('Crisis Cleanup dashboard page.')
 
+headers = {
+    'DNT': '1',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'Accept-Language': 'en-US,en;q=0.8',
+    'Upgrade-Insecure-Requests': '1',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+    'Connection': 'keep-alive',
+}
 
-driver.get(options.map)
 
+
+s = requests.session()
+s.headers.update(headers)
+cookies = driver.get_cookies()
+#s.cookies.update({'cc-joyride': 'ridden'})
+sessionkey = ''
+ga = ''
+gid = ''
+for cookie in driver.get_cookies():
+    #c = {cookie['name']: cookie['value']}
+    #print(cookie['name'], ' ' , cookie['value'])
+    if cookie['name'] == '_ga':
+        ga = cookie['value']
+    if cookie['name'] == '_gid':
+        gid = cookie['value']
+    if cookie['name'] == '_crisiscleanup_session':
+            sessionkey = cookie['value']#s.cookies.update(c)
+
+requestcookies = {
+    'cc-joyride': 'ridden',
+    '_ga': ga,
+    '_gid': gid,
+    '_crisiscleanup_session': sessionkey,
+}
+#driver.get(options.map)
+headeritems = s.headers.items()
+for h in headeritems:
+    print(h)
+print(options.map)
+
+r = requests.get(options.map, headers=headers, cookies=requestcookies,stream=True)
+print(r.status_code)
+#print(r.text)
+downloadedcsv =  os.path.join(dir_path, options.filename)
+with open(os.path.join(dir_path, options.filename), 'wb') as f:
+    for chunk in r.iter_content(chunk_size=1024):
+        if chunk: # filter out keep-alive new chunks
+            f.write(chunk)
+            #print('Writing chunk')
+                #f.flush() commented by recommendation from J.F.Sebastian
+
+print('Downloaded the CSV.')
+#time.sleep(60)
+'''
 try:
     element = WebDriverWait(driver, 10).until(EC.title_contains(("Map")))
 except TimeoutException:
@@ -143,22 +181,22 @@ except WebDriverException:
     print('Failed to press csv download btn.')
     driver.close()
     sys.exit()
-print('Downloading the CSV.')
-time.sleep(60)
+
 print('Assuming download is finished after 60 seconds.')
 
 #login_link = driver.find_element_by_link_text('Login')
 #driver.
+'''
 driver.close()
 
 #Get name of latest file
-filelist = os.listdir(dir_path)
-for file in filelist:
-    print(file)
-files = glob.glob('*.csv')
-files.sort(key=lambda x: os.stat(os.path.join(dir_path, x)).st_mtime, reverse=True)
+#filelist = os.listdir(dir_path)
+#for file in filelist:
+#    print(file)
+#files = glob.glob('*.csv')
+#files.sort(key=lambda x: os.stat(os.path.join(dir_path, x)).st_mtime, reverse=True)
 # Upload backup to Dropbox
-backup(files[0])
+backup(downloadedcsv)
 # Remove all but the latest five CSV files
 
 count = 0
@@ -167,6 +205,5 @@ for file in files:
         count = count + 1
     else:
         os.remove(file)
-
 print('Done')
 print('It took {0:0.1f} seconds'.format(time.time() - start))
