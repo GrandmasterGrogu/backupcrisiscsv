@@ -51,6 +51,7 @@ def backup(localfile):
                 sys.exit()
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
+os.chdir(dir_path)
 chrome_options = Options()
 #chrome_options.add_argument("--disable-extensions")
 #chrome_options.add_argument("--headless") # This makes Chrome run without the GUI, but disabled downloading ;^(
